@@ -822,9 +822,13 @@ localeconv()：返回一包含本地数字及货币格式信息的数组。其�
 ### AST注入 - 从原型链污染到RCE
 #### 概念 - 什么是 AST 注入
 在`NodeJS`中，`AST`经常被在`JS`中使用，作为`template engines(引擎模板)`和`typescript`等。对于引擎模板，结构如下图所示：
+
 ![image](./asserts/什么是AST注入-0.png)
+
 如果在`JS`应用中存在原型链污染漏洞，任何 `AST` 都可以通过在 `Parser(解析器)` 或 `Compiler(编译器)`过程中插入到函数中。
+
 ![image](./asserts/什么是AST注入-1.png)
+
 在这里，你可以在没有过滤、没有经过 `lexer(分析器)`或`parser(解析器)`验证的输入(没有被适当的过滤)的情况下插入 `AST`。
 然后我们可以向 `Parser(编译器)`非预期的输入。
 下面就是展示实际中在 `handlebars` 和 `pug` 使用 `AST` 注入执行任意命令
@@ -885,7 +889,9 @@ var html = fn({msg: 'It works'});
 console.log(html);
 ```
 此为在 `pug` 中使用模板的常见方法，运行结果为下图：
+
 ![image](./asserts/漏洞-pug-0.png)
+
 `pug.compile` 函数将字符串转换为模板函数并传递对象以供调用
 ```javascript
 const pug = require('pug');
@@ -895,7 +901,9 @@ var fn = pug.compile(source);
 var html = fn({msg: 'It works'});
 console.log(html);
 ```
+
 ![image](./asserts/漏洞-pug-0.png)
+
 构造 `Payload`
 ```javascript
  {
