@@ -840,8 +840,10 @@ const template = Handlebars.compile(source);
 
 console.log(template({"msg": "posix"}));
 ```
-这是如何在 `handlebars` 使用模板的方法，运行结果为下图
+这是如何在 `handlebars` 使用模板的方法，运行结果为下图：
+
 ![image](./asserts/漏洞-Handlebars-0.png)
+
 `Handlebar.compile` 函数将字符串转换为模板函数，并传递对象因子以供调用
 ```javascript
 const Handlebars = require('handlebars');
@@ -855,8 +857,10 @@ console.log(template({"msg": "posix"}));
 ```
 在这里，我们可以使用原型链污染来影响编译过程。
 你可以插入任意字符串 `payload` 到 `Object.prototype.pendingContent` 中决定你想要的攻击。
+
 ![image](./asserts/漏洞-Handlebars-1.png)
-构造 `payload`
+
+构造 `payload`：
 ```json
 {
     "type": "MustacheStatement",
@@ -1096,11 +1100,11 @@ curl localhost:9999/api/daizhige/article -v
 curl localhost:9999/api/daizhige/article -X POST -d "title=comewords&content=articleContent"
 ```
 如上这就是一个普通的`post`请求。
-但是，一般我们的接口都是`json`格式的，这也没有问题。我们可以用`-H`参数来申明请求的`header`
+但是，一般我们的接口都是`json`格式的，这也没有问题。我们可以用`-H`参数来申明请求的`er`
 ```bash
 curl localhost:9999/api/daizhige/article -X POST -H "Content-Type: application/json" -d '{"title":"comewords","content":"articleContent"}'
 ```
-> so, 我们可以用 `-H` 来设置更多的 `header` 比如，用户的 `token` 之类的。
+> so, 我们可以用 `-H` 来设置更多的 `er` 比如，用户的 `token` 之类的。
 
 同样，我们可以用 `-v` 来查看详情。
 #### curl POST 上传文件
@@ -1123,6 +1127,15 @@ curl localhost:9999/api/v1/upimg -F "file=@/Users/fungleo/Downloads/401.png" -H 
 ---
 ## 比赛WP记录
 [2023浙江省大学生网络与信息安全决赛-Misc篇](https://blog.zgsec.cn/archives/504.html?scroll=comment-98)
+
+---
+## Github以及git的使用
+### 如何比较本地内容与仓库中的内容
+1. 可以使用 `git diff` 来查看本地与远程仓库之间的差异。
+```bash
+git fetch origin
+git diff origin/main
+```
 
 ---
 ## 渗透、应急、代码审计 20 个靶场
