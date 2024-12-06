@@ -1205,7 +1205,22 @@ curl localhost:9999/api/v1/upimg -F "file=@/Users/fungleo/Downloads/401.png" -H 
 ---
 ## 报错学习
 ==**`AttributeError: module 'string' has no attribute 'letters'`**==
+
 你遇到的错误信息表明在 `Python` 的 `string` 模块中没有 `letters` 这个属性。这是因为在 `Python 3` 中，`string.letters` 已被移除。相应的，`string` 模块提供了 `string.ascii_letters` 来表示所有字母字符。
+
+### git使用时的错误
+```
+To https://github.com/Akaron155/My-Study-Notes.git
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'https://github.com/Akaron155/My-Study-Notes.git'
+hint: Updates were rejected because the remote contains work that you do
+hint: not have locally. This is usually caused by another repository pushing
+hint: to the same ref. You may want to first integrate the remote changes
+hint: (e.g., 'git pull ...') before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+```
+
+
 
 ---
 ## 比赛WP记录
