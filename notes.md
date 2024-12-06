@@ -1221,7 +1221,9 @@ curl localhost:9999/api/v1/upimg -F "file=@/Users/fungleo/Downloads/401.png" -H 
 
 你遇到的错误信息表明在 `Python` 的 `string` 模块中没有 `letters` 这个属性。这是因为在 `Python 3` 中，`string.letters` 已被移除。相应的，`string` 模块提供了 `string.ascii_letters` 来表示所有字母字符。
 
+---
 ### git使用时的错误
+
 ```
 To https://github.com/Akaron155/My-Study-Notes.git
  ! [rejected]        main -> main (fetch first)
@@ -1232,8 +1234,81 @@ hint: to the same ref. You may want to first integrate the remote changes
 hint: (e.g., 'git pull ...') before pushing again.
 hint: See the 'Note about fast-forwards' in 'git push --help' for details.
 ```
+这个错误表示你在尝试推送代码时，远程仓库 `main` 分支包含了一些你本地没有的更改。`Git` 拒绝了你的推送，因为这样可能会导致代码冲突。你需要先将远程仓库的更改拉取到本地，再进行推送。
+1. 拉取远程仓库的更新并合并
+    你需要先将远程仓库的 `main` 分支的更改拉取到本地，然后再推送。
+    ```bash
+    git pull origin main
+    ```
+    这条命令会将远程 `main` 分支的更新拉取到本地，并自动合并到当前分支。如果有冲突，需要手动解决冲突，并提交合并后的更改。
+2. 解决合并冲突（如果有）
+    如果在拉取时出现了合并冲突，`Git` 会提示你冲突的文件。你需要打开冲突的文件，手动解决冲突，然后使用以下命令标记冲突已解决：
+    ```bash
+    git add <conflicted-file>
+    git commit -m "Resolved merge conflictes"
+    ```
+    然后继续推送：
+    ```bash
+    git push origin main
+    ```
+3. 强制推送（不推荐，除非你非常确定）
+    如果你不关心远程仓库的更新，想强制将本地的更改推送到远程仓库，可以使用 `--force` 或 `--force-with-lease` 强制推送，但这可能会覆盖远程仓库的更新，因此需要谨慎使用。
+    ```bash
+    git push --force origin main
+    ```
+    `--force-with-lease` 会更安全一些，它会在推送之前检查远程分支是否有更新，只有在没有更新的情况下才会进行推送。
+    ```bash
+    git push --force-with-lease origin main
+    ```
+4. 查看远程更新和本地差异
+    在执行 `git pull` 或强制推送之前，你可能希望先查看远程仓库与本地仓库的差异。可以使用以下命令查看：
+    ```bash
+    git fetch origin
+    git diff origin/main
+    ```
+    这将显示远程 `main` 分支与本地分支的差异。
 
+---
+```
+From https://github.com/Akaron155/My-Study-Notes
+ * branch            main       -> FETCH_HEAD
+error: Your local changes to the following files would be overwritten by merge:
+        notes.md
+Please commit your changes or stash them before you merge.
+Aborting
+```
+这个错误提示表示你本地的 `notes.md` 文件有未提交的更改，如果继续执行 `git pull` 操作，这些更改会被远程分支的内容覆盖。因此，在进行合并之前，你需要先处理这些本地更改。
+1. 提交本地更改
+   如果你想保留本地对 `notes.md` 的修改，可以将这些更改提交到本地仓库，再进行拉取操作。
 
+   ```bash
+   git add notes.md
+   git commit -m "tmp"
+   git pull origin main
+   ```
+   提交完本地更改后，`Git` 会自动进行合并，或者提示你解决冲突（如果有冲突的话）。
+
+2. 暂存本地更改（stash）
+    如果你不想提交本地更改，但又希望保留这些更改，可以使用 `git stash` 将更改暂存起来，拉取远程仓库的更新，拉取完成后再应用这些更改。
+    ```bash
+    git stash
+    git pull origin main
+    git stash pop # 恢复暂存的更改
+    ```
+    `git stash pop` 会恢复你暂存的更改，可能会出现冲突，需要手动解决。
+3. 放弃本地更改（不推荐，除非确定不需要保留本地更改）
+    ```bash
+    git checkout -- notes.md # 恢复 `notes.md` 文件最后一次提交的状态
+    git pull origin main # 拉取远程更新
+    ```
+    这会丢失你的本地对 `notes.md` 文件的修改，所以谨慎操作。
+4. 查看本地和远程的差异（可选）
+    在进行任何操作之前，你可以查看本地更改和远程更改之间的差异，了解将要合并的内容。
+    ```bash
+    git diff notes.md # 查看本地对 `notes.md` 文件的更改
+    git fetch origin # 获取远程更新
+    git diff origin/main -- notes.md # 查看远程 `main` 分支上的 `notes.md` 文件更改
+    ```
 
 ---
 ## 比赛WP记录
@@ -1407,7 +1482,7 @@ jar -xvf game.war
 解压到当前目录
 
 ---
-## Github使用
+## Github 以及 git 的使用
 ### 终端命令讲解
 ```bash
 git add . # 此操作是把当前文件夹下面新的文件或者修改过的文件添加进来，如果所有的文件之前已经添加过了，它会自动省略 - 多人合作是需要先进入文件夹，然后 git pull 进行更新
@@ -1418,9 +1493,6 @@ git config --global user.email "you@example.com"
 
 git push -u origin main/master # 此操作的目的是把本地仓库 push 到 github 上面，此步骤需要你输入登录 github 上的账号和密码
 ```
-
----
-## Github以及git的使用
 ### 如何比较本地内容与仓库中的内容
 1. 可以使用 `git diff` 来查看本地与远程仓库之间的差异。
 ```bash
