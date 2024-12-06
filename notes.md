@@ -1108,11 +1108,12 @@ curl localhost:9999/api/daizhige/article -v
 curl localhost:9999/api/daizhige/article -X POST -d "title=comewords&content=articleContent"
 ```
 如上这就是一个普通的`post`请求。
-但是，一般我们的接口都是`json`格式的，这也没有问题。我们可以用`-H`参数来申明请求的`er`
+但是，一般我们的接口都是`json`格式的，这也没有问题。我们可以用`-H`参数来申明请求的`header`
+
 ```bash
 curl localhost:9999/api/daizhige/article -X POST -H "Content-Type: application/json" -d '{"title":"comewords","content":"articleContent"}'
 ```
-> so, 我们可以用 `-H` 来设置更多的 `er` 比如，用户的 `token` 之类的。
+> so, 我们可以用 `-H` 来设置更多的 `header` 比如，用户的 `token` 之类的。
 
 同样，我们可以用 `-v` 来查看详情。
 #### curl POST 上传文件
