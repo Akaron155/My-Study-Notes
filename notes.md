@@ -1334,6 +1334,7 @@ if (finfo_file($finfo, $_FILES["file"]["tmp_name"]) === 'application/zip'){
 ##### 代码分析
 <p style="text-indent:2em">代码的逻辑是，上传一个压缩包，这个压缩包在 <code>/tmp</code> 目录下进行解压，我们可以上传一个带木马的压缩包，然后解压出来，我们再去访问，就可以 <code>getshell</code> 了。但是我们无法访问 <code>/tmp</code> 目录。由于，<code>unzip</code> 可以与软链接挂钩，就是可以将某个目录连接到另一个目录或者文件下，那么我们以后对这个目录的任何操作，都会作用到另一个目录或者文件下。</p>
 <p style="text-indent:2em">那么方向就很明显了，我们可以先上传一个带有软链接的压缩包，这个软链接指向网站的根目录，即 <code>/var/www/html</code>，然后我们再上传一个带有木马文件的压缩包，就可以将这个带木马的文件解压到网站的根目录下，我们也就可以直接访问这个木马了</p>
+
 #### 具体操作
 
 ![image](./asserts/2023-CISCN-unzip-0.png)
