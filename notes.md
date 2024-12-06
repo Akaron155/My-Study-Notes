@@ -1014,6 +1014,89 @@ app.listen(3000, function () {
 ```
 
 ---
+## SSTI
+**漏洞成因：**
+* 模板引擎机制：模板引擎的作用是将动态数据与静态模板结合生成最终的输出内容。他们通过替换指定的标签或执行某些代码片段来实现这一过程。
+* 用户输入处理：当构建这些模板时，如果服务端未对用户输入进行正确的过滤和转义，恶意用户可能会插入一些特殊的代码片段。这些代码片段在模板引擎渲染过程中被执行，可能导致不安全的代码或命令被执行。
+* 注入的本质：就像 `SQL` 注入允许攻击者通过构造特殊的输入来干预数据库查询一样，`SSTI` 允许攻击者干预模板渲染的过程。这可以导致敏感信息泄露、远程代码执行等严重后果。
+* [参考链接0](https://xz.aliyun.com/t/3679)、[参考链接1](https://juejin.cn/post/7042597302413819911)
+### Python部分
+```mermaid
+graph LR
+	start("${7 * 7}") --> next1("a{*comment*}b")
+	start --> next2("{{7 * 7}}")
+	next1 --> Smarty
+	next1 --> next3("${'z'.join('ab')}")
+	next3 --> Mako
+	next3 --> Unknown
+	next2 --> next4("{{7 * '7'}}")
+	next2 --> next5("Not vulnerable")
+	next4 --> Jinja2
+	next4 --> Twig
+	next4 --> Unknown
+```
+#### Payload基础
+
+![image](./asserts/SSTI-Python-0.png)
+
+`__class__`：用于查找当前类型的所属对象，作用相当于 `type()`，用来获取类的类型。
+
+![image](./asserts/SSTI-Python-1.png)
+
+`__base__` 和 `__bases__`：用来获取类的直接父类，前者只能获取一个父类，而后者可以获取所有直接父类
+
+![image](./asserts/SSTI-Python-2.png)
+
+`__subclasses__()`：查找父类下的所有子类，后加中括号内可以填写具体哪一个子类的索引
+
+![image](./asserts/SSTI-Python-3.png)
+
+`__name__`：可以用来查看类的名称
+
+![image](./asserts/SSTI-Python-4.png)
+
+`__globals__`：以字典形式返回函数所在模块命名空间中所有的变量
+
+![image](./asserts/SSTI-Python-5.png)
+
+`__mro__` 和 `base` 的效果一致，但是这个是显示查找当前类的所有继承类
+#### 常见可利用模块
+```python
+os._AddedDIIDirectory
+os._wrap_close
+_frozen_importlib._DummyModuleLock
+_frozen_importlib._ModuleLockManager
+_frozen_importlib.ModuleSpec
+_frozen_importlib_external.FileLoader
+_frozen_importlib_external._NamespacePath
+_frozen_importlib_external._NamespaceLoader
+_frozen_importlib_external.FileFinder
+zipimport.zipimporter
+zipimport._ZipImportResourceReader
+_sitebuiltins.Quitter
+_sitebuiltins._Printer
+warnings.WarningMessage
+warnings.catch_warnings
+weakref.finalize
+pickle._Framer
+pickle._Unframer
+pickle._Pickler
+pickle._Unpickler
+jinja2.bccache.Bucket
+jinja2.runtime.TemplateReference
+jinja2.runtime.Context
+jinja2.runtime.BlockReference
+jinja2.runtime.LoopContext
+jinja2.runtime.Macro
+jinja2.runtime.Undefined
+jinja2.environment.Environment
+jinja2.environment.TemplateExpression
+jinja2.environment.TemplateStream
+dis.Bytecode
+```
+
+
+---
 ## Crypto
 
 ---
@@ -1063,6 +1146,10 @@ p.sendlineafter("[+]Please input the length of your name:\n",b'-1')
 p.sendlineafter("[+]What's u name?\n", payload)
 p.interactive()
 ```
+
+---
+## 免杀项目
+
 
 ---
 ## curl使用
@@ -1123,6 +1210,186 @@ curl localhost:9999/api/v1/upimg -F "file=@/Users/fungleo/Downloads/401.png" -H 
 ---
 ## 比赛WP记录
 [2023浙江省大学生网络与信息安全决赛-Misc篇](https://blog.zgsec.cn/archives/504.html?scroll=comment-98)
+
+### CISCN - 国赛
+#### [CISCN2023] - unzip
+> 考察点：软链接+getshell
+
+`upload.php`
+```
+<?php
+error_reporting(0);
+highlight_file(__FILE__);
+
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+if (finfo_file($finfo, $_FILES["file"]["tmp_name"]) === 'application/zip'){
+    exec('cd /tmp && unzip -o ' . $_FILES["file"]["tmp_name"]);
+};
+
+//only this!
+```
+##### 代码分析
+<p style="text-indent:2em">代码的逻辑是，上传一个压缩包，这个压缩包在 <code>/tmp</code> 目录下进行解压，我们可以上传一个带木马的压缩包，然后解压出来，我们再去访问，就可以 <code>getshell</code> 了。但是我们无法访问 <code>/tmp</code> 目录。由于，<code>unzip</code> 可以与软链接挂钩，就是可以将某个目录连接到另一个目录或者文件下，那么我们以后对这个目录的任何操作，都会作用到另一个目录或者文件下。</p>
+<p style="text-indent:2em">那么方向就很明显了，我们可以先上传一个带有软链接的压缩包，这个软链接指向网站的根目录，即 <code>/var/www/html</code>，然后我们再上传一个带有木马文件的压缩包，就可以将这个带木马的文件解压到网站的根目录下，我们也就可以直接访问这个木马了</p>
+#### 具体操作
+![image](./asserts/2023-CISCN-unzip-0.png)
+
+先创建一个软链接文件，并将他压缩到指定的压缩文件中，将他上传到服务器上。
+
+![image](./asserts/2023-CISCN-unzip-1.png)
+
+再删除之前的软链接文件，重新创建一个同名文件夹，在文件夹中写入后门文件，并返回上级目录将其打包，然后上传到服务器
+
+![image](./asserts/2023-CISCN-unzip-2.png)
+
+接着访问我们的后门文件即可执行任意系统命令
+
+---
+## unzip命令
+### 语法
+```bash
+unzip (选项) (参数)
+```
+### 选项
+```
+-c：将解压缩的结果显示到屏幕上，并对字符做适当的转换；
+-f：更新现有的文件；
+-l：显示压缩文件内所包含的文件；
+-p：与 -c 参数类似，会将解压缩的结果显示到屏幕上，但不会执行任何的转换；
+-t：检查压缩文件是否正确；
+-u：与 -f 参数类似，但是除了更新现有的文件外，也会将压缩文件中的其他文件解压缩到目录中；
+-v：执行时显示详细的信息；
+-z：仅显示压缩文件的备注文字
+-a：对文本文件进行必要的字符转换；
+-b：不要对文本文件进行字符转换；
+-C：压缩文件中的文件名区分大小写；
+-j：不处理压缩文件中原有的目录路径；
+-L：将压缩文件中的全部文件名改为小写；
+-M：将输出结果送到 more 程序处理；
+-n：解压缩时不要覆盖原有的文件；
+-o：不必先询问用户，unzip 执行后覆盖原有的文件；
+-P<密码>：使用 zip 的密码选项；
+-q：执行时不显示任何信息；
+-s：将文件名中的空白字符转换为底线字符；
+-V：保留 VMS 的文件版本信息；
+-X：解压缩时同时回存文件原来的 UID/GID ；
+-d<目录>：指定文件解压缩后所要存储的目录；
+-x<文件>：指定不要处理 .zip 压缩文件中的哪些文件；
+-Z：unzip-Z 等于执行 zipinfo 指令
+```
+### linux解压war包的命令
+网上很多人说用 `jar` 包解压，但 `jar` 命令解压时不能指定目录，推荐使用 `unzip` 解压 `war` 包。
+```
+unzip -d 指定目录
+[root@oracle upload]# unzip -oq common.war -d common
+```
+命令名： `unzip`
+功 能说明：解压缩zip文 件
+语　　法：`unzip [-cflptuvz][-agCjLMnoqsVX][-P <密 码>][.zip文 件][文件][-d <目录>][-x <文件>] 或 unzip [-Z]`
+补充说明：`unzip` 为 `.zip` 压缩文件的解压缩程序。
+参　　数：
+```
+-c   将 解压缩的结果显示到屏幕上，并对字符做适当的转换。
+-f   更 新现有的文件。
+-l   显 示压缩文件内所包含的文件。
+-p   与-c参数类似，会将解压缩的结果显示到屏幕上，但不会执行任 何的转换。
+-t   检 查压缩文件是否正确。，但不解压。
+-u   与-f参数类似，但是除了更新现有的文件外，也会将压缩文件中 的其他文件解压缩到目录中。
+-v   执 行是时显示详细的信息。或查看压缩文件目录，但不解压。
+-z   仅 显示压缩文件的备注文字。
+-a   对 文本文件进行必要的字符转换。
+-b   不 要对文本文件进行字符转换。
+-C   压 缩文件中的文件名称区分大小写。
+-j   不 处理压缩文件中原有的目录路径。
+-L   将 压缩文件中的全部文件名改为小写。
+-M   将 输出结果送到more程 序处理。
+-n   解 压缩时不要覆盖原有的文件。
+-o   不 必先询问用户，unzip执 行后覆盖原有文件。
+-P<密码>   使 用zip的密码选项。
+-q   执 行时不显示任何信息。
+-s   将 文件名中的空白字符转换为底线字符。
+-V   保 留VMS的文件版本信 息。
+-X   解 压缩时同时回存文件原来的UID/GID。
+[.zip文件]   指定.zip压缩文件。
+[文件]   指定 要处理.zip压缩文 件中的哪些文件。
+-d<目录>   指 定文件解压缩后所要存储的目录。
+-x<文件>   指 定不要处理.zip压 缩文件中的哪些文件。
+-Z   unzip -Z等 于执行zipinfo指 令。
+```
+命令名：`zip`
+功能说明：压缩文件。
+语　　法：`zip [-AcdDfFghjJKlLmoqrSTuvVwXyz$][-b <工 作目录>][-ll][-n <字 尾字符串>][-t <日 期时间>][-<压 缩效率>][压 缩文件][文件...][-i <范本样式>][-x <范本样式>]`
+补充说明：`zip`是个使用广泛的压缩程序，文件经它压缩后会另外产生具 有`".zip"`扩展名 的压缩文件。
+参　　数：
+```
+-A   调 整可执行的自动解压缩文件。
+-b<工作目录>   指 定暂时存放文件的目录。
+-c   替 每个被压缩的文件加上注释。
+-d   从 压缩文件内删除指定的文件。
+-D   压 缩文件内不建立目录名称。
+-f   此 参数的效果和指定"-u"参 数类似，但不仅更新既有文件，如果某些文件原本不存在于压缩文件内，使用本参数会一并将其加入压缩文件中。
+-F   尝 试修复已损坏的压缩文件。
+-g   将 文件压缩后附加在既有的压缩文件之后，而非另行建立新的压缩文件。
+-h   在 线帮助。
+-i<范本样式>   只 压缩符合条件的文件。
+-j   只 保存文件名称及其内容，而不存放任何目录名称。
+-J   删 除压缩文件前面不必要的数据。
+-k   使 用MS-DOS兼容格 式的文件名称。
+-l   压 缩文件时，把LF字符 置换成LF+CR字 符。
+-ll   压 缩文件时，把LF+CR字 符置换成LF字符。
+-L   显 示版权信息。
+-m   将 文件压缩并加入压缩文件后，删除原始文件，即把文件移到压缩文件中。
+-n<字尾字符串>   不 压缩具有特定字尾字符串的文件。
+-o   以 压缩文件内拥有最新更改时间的文件为准，将压缩文件的更改时间设成和该文件相同。
+-q   不显 示指令执行过程。
+-r   递 归处理，将指定目录下的所有文件和子目录一并处理。
+-S   包 含系统和隐藏文件。
+-t<日期时间>   把 压缩文件的日期设成指定的日期。
+-T   检 查备份文件内的每个文件是否正确无误。
+-u   更 换较新的文件到压缩文件内。
+-v   显 示指令执行过程或显示版本信息。
+-V   保 存VMS操作系统的文 件属性。
+-w   在 文件名称里假如版本编号，本参数仅在VMS操 作系统下有效。
+-x<范本样式>   压 缩时排除符合条件的文件。
+-X   不 保存额外的文件属性。
+-y   直 接保存符号连接，而非该连接所指向的文件，本参数仅在UNIX之 类的系统下有效。
+-z   替 压缩文件加上注释。
+-$   保 存第一个被压缩文件所在磁盘的卷册名称。
+-<压缩效率>   压 缩效率是一个介于1-9的 数值。
+```
+例.   将当前目录下的所有文件和文件夹全部压缩成test.zip文件,-r表示递归压缩子目录下所有文件
+```
+[root@mysql test]# zip -r test.zip ./*
+```
+`jar` 命令
+压缩 `war` 包：
+把当前目录下的所有文件打包成 `game.war`
+```
+jar -cvfM0 game.war ./
+-c   创建war包
+-v   显示过程信息
+-f    指定归档文件名
+-M  不创建条目的清单文件
+-0   这个是阿拉伯数字，只打包不压缩的意思
+```
+解压 `war` 包
+```bash
+jar -xvf game.war
+```
+解压到当前目录
+
+---
+## Github使用
+### 终端命令讲解
+```bash
+git add . # 此操作是把当前文件夹下面新的文件或者修改过的文件添加进来，如果所有的文件之前已经添加过了，它会自动省略 - 多人合作是需要先进入文件夹，然后 git pull 进行更新
+git commit -m "提交信息" # 提交的信息是你的项目说明 -m 表示可以直接输入提交说明，如果不加 -m，直接输入 git commit，就会弹出一个类似于 vim 的界面让你输入提交说明
+# 在第一次使用时需要先全局配置好 git 上的用户名和邮箱
+git config --global user.name "whoareyou"
+git config --global user.email "you@example.com"
+
+git push -u origin main/master # 此操作的目的是把本地仓库 push 到 github 上面，此步骤需要你输入登录 github 上的账号和密码
+```
 
 ---
 ## 渗透、应急、代码审计 20 个靶场
